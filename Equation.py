@@ -17,7 +17,7 @@ class Equation:
           return csi + b * t + c * t * t
   
       eq = Equation(f, ['t'], ['csi', 'b', 'c'])
-      jsEq = eq.Convert2JS()
+      jsEq = eq.convert2JS()
     """
     def __init__(self, f, variables, parameters):
         """
@@ -41,7 +41,7 @@ class Equation:
         """
         return self.functionStr
 
-    def ConvertFunctionToString(self):
+    def convertFunctionToString(self):
         """
         ABOUT
         -----
@@ -61,7 +61,7 @@ class Equation:
             res += line
         return res
 
-    def Convert2JS(self, indentation = '    ', newIndentation = '        '):
+    def convert2JS(self, indentation = '    ', newIndentation = '        '):
         """
         ABOUT
         ------
