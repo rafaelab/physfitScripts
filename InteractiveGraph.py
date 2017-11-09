@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider, Button, RadioButtons
 from Equation import Equation
 
 # ____________________________________________________________________________________________
@@ -21,11 +22,11 @@ class InteractiveGraph:
             return csi + b * t + c * t * t
 
         eq = Equation(f, ['t'], ['csi', 'b', 'c'])
-        jsEq = eq.Convert2JS()
-
-        js = InteractiveGraph(eq, xmin = -5, xmax = 5, ymin = -10, ymax = 10, xminDomain = -5, xmaxDomain = 5, scale = 'lin')
-        print(js.assembleJS())
-        js.PlotGraphPy('test.png', 1)
+        g = InteractiveGraph(eq, xmin = -5, xmax = 5, ymin = -10, ymax = 10, vmin = -5, vmax = 5, scale = 'lin')
+        g.plotInteractivePyGraph()
+        g.plotStaticPyGraph(1)
+        js = g.assembleJS()
+        print(js)
     ---
     The output format is the following:
         SliderGraph({
@@ -57,7 +58,7 @@ class InteractiveGraph:
         sampleSize: 500
         });
     """
-    def __init__(self, equation, xmin = None, xmax = None, ymin = None, ymax = None, xminDomain = -1e10, xmaxDomain = 1e10, xLabel = 'x', yLabel = 'y', startPoint = 0, sampleSize = 300, scale = 'lin'):
+    def __init__(self, equation, xmin = None, xmax = None, ymin = None, ymax = None, vmin = -1e10, vmax = 1e10, xLabel = 'x', yLabel = 'y', startPoint = 0, sampleSize = 300, scale = 'lin'):
         """
         ABOUT
         ------
@@ -66,7 +67,8 @@ class InteractiveGraph:
         INPUT
         -----
           equation: instance of Equation object
-          (x,y,z)min, (x,y,z)max: limits for the canvas
+          (x,y)min, (x,y)max: limits for the canvas
+          vmin, vmax: limits of parametersfor slider
           (x, y)label: labels x and y
           startPoint: default position of slider
           sampleSize: number of points to sample the curve
@@ -80,10 +82,10 @@ class InteractiveGraph:
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
+        self.vmin = vmin
+        self.vmax = vmax
         self.xAxisLabel = xLabel
         self.yAxisLabel = yLabel
-        self.xminDomain = xminDomain
-        self.xmaxDomain = xmaxDomain
         self.startPoint = startPoint
         self.sampleSize = sampleSize
         self.scale = scale
@@ -146,7 +148,7 @@ class InteractiveGraph:
             variable = self.equation.variables[0]
             parameter = self.equation.parameters[0]
             self.strEquation = '    equation: function(%s, %s){\n' % (variable, parameter)
-            self.strEquation += self.equation.Convert2JS()
+            self.strEquation += self.equation.convert2JS()
             self.strEquation += '    }, \n'
         else:
             self.strEquation = strEquation
@@ -216,11 +218,11 @@ class InteractiveGraph:
         self.strDomain  = '    domain: {\n'
 
         if xmin == None:
-            self.strDomain += '        xmin: %f, \n' % self.xminDomain
+            self.strDomain += '        xmin: %f, \n' % self.vmin
         else:
             self.strDomain += '        xmin: %f, \n' % xmin
         if xmax == None:
-            self.strDomain += '        xmax: %f \n' % self.xmaxDomain
+            self.strDomain += '        xmax: %f \n' % self.vmax
         else:
             self.strDomain += '        xmax: %f \n' % xmax
 
@@ -284,19 +286,89 @@ class InteractiveGraph:
         self.scriptJS = self.strBaseBegin + self.strEquation + self.strLimits + self.strDomain + self.strAxes + self.strSlider + self.strBaseEnd
         return self.scriptJS
 
-    def PlotGraphPy(self, outputName, a):
+    def plotStaticPyGraph(self, a, batch = False, outputName = ''):
         """
         ABOUT
         -----
+        Plot a python graph for a given value of the parameter a.
 
+        INPUT
+        -----
+          a: parameter of the slide
+          batch: if False, displays the graph
+          outputName: name of the output file containing the graph
+
+        OUTPUT
+        ------
+          Nothing is returned.
         """
         if self.scale == 'log':
-            x = np.linspace(np.log10(self.xminDomain), np.log10(self.xmaxDomain), self.sampleSize)
+            x = np.linspace(np.log10(self.xmin), np.log10(self.xmax), self.sampleSize)
             y = np.log10(self.equation.function(10**x, a))
         else:
-            x = np.linspace(self.xminDomain, self.xmaxDomain, self.sampleSize)
+            x = np.linspace(self.xmin, self.xmax, self.sampleSize)
             y = self.equation.function(x, a) 
         plt.plot(x, y)
+        plt.xlabel(self.xAxisLabel)
+        plt.ylabel(self.yAxisLabel)
         plt.axis([self.xmin, self.xmax, self.ymin, self.ymax])
-        plt.savefig(outputName)
+        if outputName != '':
+            plt.savefig(outputName)
+        if not batch:
+            plt.show()
 
+    def plotInteractivePyGraph(self, a0 = 0):
+        """
+        ABOUT
+        -----
+          Plot python interactive graph with slider.
+
+        INPUT
+        -----
+
+        OUTPUT
+        ------
+        """
+        if self.scale == 'log':
+            x = np.linspace(np.log10(self.xmin), np.log10(self.xmax), self.sampleSize)
+            y = np.log10(self.equation.function(10**x, a0))
+        else:
+            x = np.linspace(self.xmin, self.xmax, self.sampleSize)
+            y = self.equation.function(x, a0) 
+
+        fig, ax = plt.subplots()
+        plt.subplots_adjust(left = 0.25, bottom = 0.25)
+        l, = plt.plot(x, y)
+        plt.axis([self.xmin, self.xmax, self.ymin, self.ymax])
+        plt.xlabel(self.xAxisLabel)
+        plt.ylabel(self.yAxisLabel)
+
+        aSlider = plt.axes([0.25, 0.10, 0.65, 0.03])
+        sliderLabel = self.equation.parameters[0]
+        slider = Slider(aSlider, sliderLabel, self.vmin, self.vmax, valinit = a0)
+
+        def update(a):
+            y = self.equation.function(x, a) 
+            l.set_ydata(y)
+            fig.canvas.draw_idle()
+        slider.on_changed(update)
+        
+        plt.show()
+
+# ____________________________________________________________________________________________
+#
+def test():
+    """
+    Simple test
+    """        
+    def f(t, csi):
+        b = 1.2
+        c = .4
+        return csi + b * t + c * t * t
+
+    eq = Equation(f, ['t'], ['csi', 'b', 'c'])
+    g = InteractiveGraph(eq, xmin = -5, xmax = 5, ymin = -10, ymax = 10, vmin = -5, vmax = 5, scale = 'lin')
+    g.plotInteractivePyGraph()
+    g.plotStaticPyGraph(1)
+    js = g.assembleJS()
+    print(js)
