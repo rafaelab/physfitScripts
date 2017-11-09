@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 
 # ____________________________________________________________________________________________
 #
@@ -115,7 +116,19 @@ class TexDoc:
         if self.latexContent == '':
             self.createTexFile()
 
-        cmd1 = 'pdflatex -interaction=batchmode %s' %  self.latexFile
+        if outFile == '':
+            path = self.latexFile.split('/')
+            outDir = ''
+            for i, p in enumerate(path):
+                if i <= len(path) - 2:
+                    outDir = outDir + p + '/'
+                if i == len(path) - 1:
+                    outFile = p.replace('.tex', '.pdf')
+        else:
+            outDir = ''
+        print(outDir)
+
+        cmd1 = 'pdflatex -interaction=batchmode %s' %  (self.latexFile)
         os.system(cmd1)
         os.system(cmd1)
         print(cmd1)
@@ -125,9 +138,8 @@ class TexDoc:
             for x in auxFiles:
                 os.system('rm -f *%s' % x)
 
-        if outFile != '':
-            cmd2 = 'mv %s %s' % (self.latexFile, outFile)
-            os.system(cmd2)
+        cmd2 = 'mv %s %s.' % (outFile, outDir)
+        os.system(cmd2)
 
     def convertTex2Website(self):
         """
@@ -171,4 +183,29 @@ class TexDoc:
 
 # ____________________________________________________________________________________________
 #
+if __name__ == '__main__':
+    """
+    ABOUT
+    -----
+    Main is executed by passing an argument, corresponding to the text file in TeX style.
 
+    EXAMPLE
+    ------
+      python Tex2Web.py <filename.txt> "this is the title" "author name" [optional]
+    """
+    if len(sys.argv) != 3 and len(sys.argv) != 4:
+        raise Exception('Wrong number of arguments.\n Use:\n  python Tex2Web.py <filename.txt> "this is the title" "author name" [optional]')
+
+
+    fi = sys.argv[1]
+    fo = fi.replace('.txt', '.tex')
+    title = sys.argv[2]
+    if len(sys.argv) == 4:
+        author = sys.argv[3]
+    else:
+        author = 'Rafa'
+    tex = TexDoc(fi, title = title, author = author)
+    tex.createTexFile(outFile = fo)
+    tex.compileTexFile()
+    b = tex.convertTex2Website()
+    # print(b)
