@@ -34,7 +34,7 @@ class Equation:
         self.function = f
         self.variables = variables
         self.parameters = parameters
-        self.functionStr = self.ConvertFunctionToString()
+        self.functionStr = self.convertFunctionToString()
 
     def __str__(self):
         """
