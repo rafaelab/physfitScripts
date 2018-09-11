@@ -90,7 +90,7 @@ class Equation:
             py2jsDict['np.%s' % f] = 'Math.%s' % f
         py2jsDict['pow'] = 'Math.pow'
         py2jsDict['np.pi'] = 'Math.PI'
-        py2jsDict['np.e'] = 'Math.E'
+        # py2jsDict['np.e'] = 'Math.E'
         
         res = ''
         for i, line in enumerate(lines):
