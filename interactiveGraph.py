@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
-from Equation import Equation
+from physfitScripts.equation import Equation
 
 # ____________________________________________________________________________________________
 #
