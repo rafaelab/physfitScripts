@@ -1,4 +1,8 @@
-from InteractiveGraph import *
+import sys
+sys.path.insert(0, '../../')
+
+from physfitScripts.interactiveGraph import InteractiveGraph
+from physfitScripts.equation import Equation
 
 # ____________________________________________________________________________________________
 #
